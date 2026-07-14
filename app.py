@@ -20,12 +20,13 @@ app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 # --- Config -----------------------------------------------------------
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 CSV_PATH = os.path.join(DATA_DIR, "entries.csv")
-CSV_HEADERS = ["date", "time", "entry", "vibes", "submitted_at"]
+CSV_HEADERS = ["date", "time", "entry", "vibes", "hydration", "submitted_at"]
 
 PAGE_TITLE = config.PAGE_TITLE
 PAGE_SUBTITLE = config.PAGE_SUBTITLE
 ENTRY_PLACEHOLDER = config.ENTRY_PLACEHOLDER
 VIBE_OPTIONS = config.VIBE_OPTIONS
+HYDRATION_OPTIONS = config.HYDRATION_OPTIONS
 
 # Basic auth credentials - set these as environment variables on the host,
 # don't hardcode real values here.
@@ -64,7 +65,7 @@ def ensure_csv():
             writer.writerow(CSV_HEADERS)
 
 
-def append_entry(date_val, time_val, entry_val, vibes_val):
+def append_entry(date_val, time_val, entry_val, vibes_val, hydration_val):
     ensure_csv()
     now = datetime.now()
     # Fallback rule: if no time given, use the current server time.
@@ -82,6 +83,7 @@ def append_entry(date_val, time_val, entry_val, vibes_val):
             time_val,
             entry_val.strip(),
             vibes_val,
+            hydration_val,
             now.isoformat(timespec="seconds"),
         ])
 
@@ -97,6 +99,7 @@ def index():
         today=today,
         now_time=now_time,
         vibe_options=VIBE_OPTIONS,
+        hydration_options=HYDRATION_OPTIONS,
         page_title=PAGE_TITLE,
         page_subtitle=PAGE_SUBTITLE,
         entry_placeholder=ENTRY_PLACEHOLDER,
@@ -110,6 +113,7 @@ def submit():
     time_val = request.form.get("time", "").strip()
     entry_val = request.form.get("entry", "").strip()
     vibes_val = request.form.get("vibes", "").strip()
+    hydration_val = request.form.get("hydration", "").strip()
 
     if not entry_val:
         flash("Entry text can't be empty.")
@@ -119,7 +123,11 @@ def submit():
         flash("Invalid mood selection.")
         return redirect(url_for("index"))
 
-    append_entry(date_val, time_val, entry_val, vibes_val)
+    if hydration_val and hydration_val not in HYDRATION_OPTIONS:
+        flash("Invalid hydration selection.")
+        return redirect(url_for("index"))
+
+    append_entry(date_val, time_val, entry_val, vibes_val, hydration_val)
     flash("Logged.")
     return redirect(url_for("index"))
 

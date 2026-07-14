@@ -85,14 +85,14 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-    .vibes {
+    .pill-group {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       margin-top: 6px;
     }
-    .vibes input { display: none; }
-    .vibes label {
+    .pill-group input { display: none; }
+    .pill-group label {
       margin: 0;
       font-weight: 500;
       font-size: 0.88rem;
@@ -103,7 +103,7 @@
       padding: 8px 16px;
       cursor: pointer;
     }
-    .vibes input:checked + label {
+    .pill-group input:checked + label {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
@@ -152,10 +152,18 @@
       <textarea id="entry" name="entry" placeholder="..." required></textarea>
 
       <label>Vibes</label>
-      <div class="vibes">
+      <div class="pill-group vibes">
         {% for option in vibe_options %}
           <input type="radio" id="vibe-{{ loop.index }}" name="vibes" value="{{ option }}" {% if loop.first %}checked{% endif %}>
           <label for="vibe-{{ loop.index }}">{{ option }}</label>
+        {% endfor %}
+      </div>
+
+      <label>Hydration</label>
+      <div class="pill-group hydration">
+        {% for option in hydration_options %}
+          <input type="radio" id="hydration-{{ loop.index }}" name="hydration" value="{{ option }}" {% if loop.first %}checked{% endif %}>
+          <label for="hydration-{{ loop.index }}">{{ option }}</label>
         {% endfor %}
       </div>
 
