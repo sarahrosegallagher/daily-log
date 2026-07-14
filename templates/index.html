@@ -179,6 +179,25 @@
 
       <button type="submit">Log it</button>
     </form>
+
+    <label style="margin-top: 26px;">Medications</label>
+    <form action="{{ url_for('meds') }}" method="POST">
+      <label for="meds-date">Date</label>
+      <input type="date" id="meds-date" name="date" value="{{ today }}">
+
+      <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--ink); margin: 10px 0 0;">
+        <input type="checkbox" id="adderall_taken" name="adderall_taken" {% if meds.adderall_taken %}checked{% endif %} style="width: auto;">
+        {{ med_am_label }}
+      </label>
+      <input type="time" id="adderall_time" name="adderall_time" value="{{ meds.adderall_time }}" style="margin-top: 8px;">
+
+      <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--ink); margin: 18px 0 0;">
+        <input type="checkbox" id="nighttime_meds_taken" name="nighttime_meds_taken" {% if meds.nighttime_meds_taken %}checked{% endif %} style="width: auto;">
+        {{ med_pm_label }}
+      </label>
+
+      <button type="submit" style="margin-top: 18px;">Update meds</button>
+    </form>
   </div>
 </body>
 </html>

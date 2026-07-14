@@ -28,6 +28,8 @@ ENTRY_PLACEHOLDER = config.ENTRY_PLACEHOLDER
 VIBE_OPTIONS = config.VIBE_OPTIONS
 HYDRATION_OPTIONS = config.HYDRATION_OPTIONS
 SYMPTOM_OPTIONS = config.SYMPTOM_OPTIONS
+MED_AM_LABEL = config.MED_AM_LABEL
+MED_PM_LABEL = config.MED_PM_LABEL
 
 # Basic auth credentials - set these as environment variables on the host,
 # don't hardcode real values here.
@@ -152,6 +154,39 @@ def append_entry(date_val, time_val, entry_val, vibes_val, hydration_val, sympto
             )
 
 
+def get_today_meds(date_str):
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute(
+            "SELECT adderall_taken, adderall_time, nighttime_meds_taken "
+            "FROM daily_meds WHERE date = ?",
+            (date_str,),
+        ).fetchone()
+    if row is None:
+        return {"adderall_taken": False, "adderall_time": "", "nighttime_meds_taken": False}
+    adderall_taken, adderall_time, nighttime_meds_taken = row
+    return {
+        "adderall_taken": bool(adderall_taken),
+        "adderall_time": adderall_time or "",
+        "nighttime_meds_taken": bool(nighttime_meds_taken),
+    }
+
+
+def upsert_meds(date_str, adderall_taken, adderall_time, nighttime_meds_taken):
+    ensure_db()
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            INSERT INTO daily_meds (date, adderall_taken, adderall_time, nighttime_meds_taken)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(date) DO UPDATE SET
+                adderall_taken = excluded.adderall_taken,
+                adderall_time = excluded.adderall_time,
+                nighttime_meds_taken = excluded.nighttime_meds_taken
+            """,
+            (date_str, int(adderall_taken), adderall_time, int(nighttime_meds_taken)),
+        )
+
+
 # --- Routes -----------------------------------------------------------
 @app.route("/", methods=["GET"])
 @requires_auth
@@ -169,6 +204,9 @@ def index():
         page_title=PAGE_TITLE,
         page_subtitle=PAGE_SUBTITLE,
         entry_placeholder=ENTRY_PLACEHOLDER,
+        med_am_label=MED_AM_LABEL,
+        med_pm_label=MED_PM_LABEL,
+        meds=get_today_meds(today),
     )
 
 
@@ -196,6 +234,19 @@ def submit():
 
     append_entry(date_val, time_val, entry_val, vibes_val, hydration_val, symptom_val)
     flash("Logged.")
+    return redirect(url_for("index"))
+
+
+@app.route("/meds", methods=["POST"])
+@requires_auth
+def meds():
+    date_val = request.form.get("date", "").strip() or datetime.now().strftime("%Y-%m-%d")
+    adderall_taken = "adderall_taken" in request.form
+    adderall_time = request.form.get("adderall_time", "").strip() if adderall_taken else ""
+    nighttime_meds_taken = "nighttime_meds_taken" in request.form
+
+    upsert_meds(date_val, adderall_taken, adderall_time, nighttime_meds_taken)
+    flash("Meds updated.")
     return redirect(url_for("index"))
 
 
