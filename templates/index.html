@@ -6,13 +6,16 @@
   <title>{{ page_title }}</title>
   <style>
     :root {
-      --bg: #f7f6f3;
+      /* Tokens from STYLE_GUIDE.md — chart-lightblue as page bg, chart-amber as accent */
+      --bg: #33b2df;
       --surface: #ffffff;
-      --ink: #2e2c28;
+      --ink: #1e1e1e;
       --ink-soft: #6b6862;
-      --line: #e3e0da;
-      --accent: #5b7065;
-      --accent-soft: #eef2ef;
+      --line: #e0e0e0;
+      --accent: #feb019;
+      --accent-ink: #1e1e1e;
+      --accent-soft: #fff4da;
+      --neutral: #f0f0f0;
     }
     * { box-sizing: border-box; }
     body {
@@ -68,7 +71,7 @@
       font-size: 1rem;
       font-family: inherit;
       color: var(--ink);
-      background: var(--bg);
+      background: var(--neutral);
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 10px 12px;
@@ -94,7 +97,7 @@
       font-weight: 500;
       font-size: 0.88rem;
       color: var(--ink);
-      background: var(--bg);
+      background: var(--neutral);
       border: 1px solid var(--line);
       border-radius: 20px;
       padding: 8px 16px;
@@ -103,13 +106,13 @@
     .pill-group input:checked + label {
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--accent-ink);
     }
     button {
       width: 100%;
       margin-top: 26px;
       background: var(--accent);
-      color: #fff;
+      color: var(--accent-ink);
       border: none;
       border-radius: 8px;
       padding: 13px;
