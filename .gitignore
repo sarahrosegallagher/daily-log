@@ -5,3 +5,4 @@ __pycache__/
 instance/
 .DS_Store
 data/entries.csv
+README-internal.md

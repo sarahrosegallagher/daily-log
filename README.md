@@ -1,7 +1,7 @@
 # Daily Log
 
 A tiny, private Flask form for logging a daily entry (date, time, short text,
-vibes) straight to a CSV file — no Google involved.
+vibes) straight to a CSV file.
 
 ## What's here
 
