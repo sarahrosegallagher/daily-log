@@ -1,6 +1,7 @@
 import hmac
 import os
 import sqlite3
+from collections import Counter
 from datetime import datetime
 from functools import wraps
 from dotenv import load_dotenv
@@ -26,6 +27,7 @@ PAGE_SUBTITLE = config.PAGE_SUBTITLE
 ENTRY_PLACEHOLDER = config.ENTRY_PLACEHOLDER
 VIBE_OPTIONS = config.VIBE_OPTIONS
 HYDRATION_OPTIONS = config.HYDRATION_OPTIONS
+SYMPTOM_OPTIONS = config.SYMPTOM_OPTIONS
 
 # Basic auth credentials - set these as environment variables on the host,
 # don't hardcode real values here.
@@ -78,9 +80,47 @@ def ensure_db():
                 nighttime_meds_taken INTEGER DEFAULT 0
             )
         """)
+        try:
+            conn.execute("ALTER TABLE entries ADD COLUMN symptom TEXT")
+        except sqlite3.OperationalError:
+            pass  # column already exists
 
 
-def append_entry(date_val, time_val, entry_val, vibes_val, hydration_val):
+ensure_db()  # run at import time so DB/tables exist regardless of how the app is started
+
+
+def get_entry_suggestions():
+    """Past entry values for the datalist: deduped case-insensitively,
+    most-frequently-used casing wins, sorted most- to least-used."""
+    with sqlite3.connect(DB_PATH) as conn:
+        rows = conn.execute(
+            "SELECT entry FROM entries WHERE entry IS NOT NULL AND entry != ''"
+        ).fetchall()
+
+    casing_counts = {}  # lowercased entry -> Counter of original casings
+    for (entry_val,) in rows:
+        key = entry_val.lower()
+        casing_counts.setdefault(key, Counter())[entry_val] += 1
+
+    def total_uses(counter):
+        return sum(counter.values())
+
+    ranked = sorted(casing_counts.values(), key=total_uses, reverse=True)
+    return [counter.most_common(1)[0][0] for counter in ranked]
+
+
+def split_entry_text(entry_val):
+    """Split a comma-separated entry ('latte, grilled cheese') into individual
+    items. Empty/whitespace-only pieces are dropped. Returns [None] for blank
+    input, matching the existing "entry is optional" behavior."""
+    if not entry_val or not entry_val.strip():
+        return [None]
+    pieces = [piece.strip() for piece in entry_val.split(",")]
+    pieces = [piece for piece in pieces if piece]
+    return pieces or [None]
+
+
+def append_entry(date_val, time_val, entry_val, vibes_val, hydration_val, symptom_val):
     ensure_db()
     now = datetime.now()
     # Fallback rule: if no time given, use the current server time.
@@ -91,21 +131,25 @@ def append_entry(date_val, time_val, entry_val, vibes_val, hydration_val):
     if not date_val:
         date_val = now.strftime("%Y-%m-%d")
 
+    submitted_at = now.isoformat(timespec="seconds")
+
     with sqlite3.connect(DB_PATH) as conn:
-        conn.execute(
-            """
-            INSERT INTO entries (date, time, entry, vibes, hydration, submitted_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (
-                date_val,
-                time_val,
-                entry_val.strip() or None,
-                vibes_val,
-                hydration_val,
-                now.isoformat(timespec="seconds"),
-            ),
-        )
+        for entry_piece in split_entry_text(entry_val):
+            conn.execute(
+                """
+                INSERT INTO entries (date, time, entry, vibes, hydration, symptom, submitted_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    date_val,
+                    time_val,
+                    entry_piece,
+                    vibes_val,
+                    hydration_val,
+                    symptom_val,
+                    submitted_at,
+                ),
+            )
 
 
 # --- Routes -----------------------------------------------------------
@@ -120,6 +164,8 @@ def index():
         now_time=now_time,
         vibe_options=VIBE_OPTIONS,
         hydration_options=HYDRATION_OPTIONS,
+        symptom_options=SYMPTOM_OPTIONS,
+        entry_suggestions=get_entry_suggestions(),
         page_title=PAGE_TITLE,
         page_subtitle=PAGE_SUBTITLE,
         entry_placeholder=ENTRY_PLACEHOLDER,
@@ -134,6 +180,7 @@ def submit():
     entry_val = request.form.get("entry", "").strip()
     vibes_val = request.form.get("vibes", "").strip()
     hydration_val = request.form.get("hydration", "").strip()
+    symptom_val = request.form.get("symptom", "").strip()
 
     if vibes_val and vibes_val not in VIBE_OPTIONS:
         flash("Invalid mood selection.")
@@ -143,7 +190,11 @@ def submit():
         flash("Invalid hydration selection.")
         return redirect(url_for("index"))
 
-    append_entry(date_val, time_val, entry_val, vibes_val, hydration_val)
+    if symptom_val and symptom_val not in SYMPTOM_OPTIONS:
+        flash("Invalid symptom selection.")
+        return redirect(url_for("index"))
+
+    append_entry(date_val, time_val, entry_val, vibes_val, hydration_val, symptom_val)
     flash("Logged.")
     return redirect(url_for("index"))
 

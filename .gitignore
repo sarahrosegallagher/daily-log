@@ -8,4 +8,7 @@ data/entries.csv
 data/daily_log.db
 README-internal.md
 config.py
+
+# one off scripts
 migrate_to_sqlite.py
+split_comma_entries.py
