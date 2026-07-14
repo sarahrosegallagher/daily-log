@@ -146,9 +146,9 @@ def append_entry(date_val, time_val, entry_val, vibes_val, hydration_val, sympto
                     date_val,
                     time_val,
                     entry_piece,
-                    vibes_val,
-                    hydration_val,
-                    symptom_val,
+                    vibes_val or None,
+                    hydration_val or None,
+                    symptom_val or None,
                     submitted_at,
                 ),
             )

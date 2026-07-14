@@ -156,7 +156,7 @@
       <label>Vibes</label>
       <div class="pill-group vibes">
         {% for option in vibe_options %}
-          <input type="radio" id="vibe-{{ loop.index }}" name="vibes" value="{{ option }}" {% if loop.first %}checked{% endif %}>
+          <input type="radio" id="vibe-{{ loop.index }}" name="vibes" value="{{ option }}">
           <label for="vibe-{{ loop.index }}">{{ option }}</label>
         {% endfor %}
       </div>
@@ -164,7 +164,7 @@
       <label>Hydration</label>
       <div class="pill-group hydration">
         {% for option in hydration_options %}
-          <input type="radio" id="hydration-{{ loop.index }}" name="hydration" value="{{ option }}" {% if loop.first %}checked{% endif %}>
+          <input type="radio" id="hydration-{{ loop.index }}" name="hydration" value="{{ option }}">
           <label for="hydration-{{ loop.index }}">{{ option }}</label>
         {% endfor %}
       </div>
@@ -172,7 +172,7 @@
       <label>Symptom</label>
       <div class="pill-group symptom">
         {% for option in symptom_options %}
-          <input type="radio" id="symptom-{{ loop.index }}" name="symptom" value="{{ option }}" {% if loop.first %}checked{% endif %}>
+          <input type="radio" id="symptom-{{ loop.index }}" name="symptom" value="{{ option }}">
           <label for="symptom-{{ loop.index }}">{{ option }}</label>
         {% endfor %}
       </div>
@@ -199,5 +199,19 @@
       <button type="submit" style="margin-top: 18px;">Update meds</button>
     </form>
   </div>
+  <script>
+    // Radio pills (vibes/hydration/symptom) are optional: clicking an
+    // already-selected pill clears it instead of leaving one forced choice.
+    document.querySelectorAll('.pill-group input[type="radio"]').forEach(function (radio) {
+      radio.addEventListener('mousedown', function () {
+        radio.dataset.wasChecked = radio.checked ? "true" : "false";
+      });
+      radio.addEventListener('click', function () {
+        if (radio.dataset.wasChecked === "true") {
+          radio.checked = false;
+        }
+      });
+    });
+  </script>
 </body>
 </html>
