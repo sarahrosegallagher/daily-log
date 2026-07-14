@@ -1,9 +1,13 @@
 import csv
+import hmac
 import os
 from datetime import datetime
 from functools import wraps
+from dotenv import load_dotenv
 
 from flask import Flask, render_template, request, redirect, url_for, flash, Response
+
+load_dotenv()  # reads .env if present; no-op if it doesn't exist (e.g. on PythonAnywhere)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
@@ -23,7 +27,7 @@ AUTH_PASS = os.environ.get("FORM_PASS", "changeme")
 
 # --- Auth ---------------------------------------------------------------
 def check_auth(username, password):
-    return username == AUTH_USER and password == AUTH_PASS
+    return hmac.compare_digest(username, AUTH_USER) and hmac.compare_digest(password, AUTH_PASS)
 
 
 def authenticate():
@@ -100,6 +104,10 @@ def submit():
         flash("Entry text can't be empty.")
         return redirect(url_for("index"))
 
+    if vibes_val and vibes_val not in VIBE_OPTIONS:
+        flash("Invalid mood selection.")
+        return redirect(url_for("index"))
+
     append_entry(date_val, time_val, entry_val, vibes_val)
     flash("Logged.")
     return redirect(url_for("index"))
@@ -107,4 +115,5 @@ def submit():
 
 if __name__ == "__main__":
     ensure_csv()
-    app.run(debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug_mode)
