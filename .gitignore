@@ -5,5 +5,7 @@ __pycache__/
 instance/
 .DS_Store
 data/entries.csv
+data/daily_log.db
 README-internal.md
 config.py
+migrate_to_sqlite.py

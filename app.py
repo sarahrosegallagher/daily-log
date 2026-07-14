@@ -1,6 +1,6 @@
-import csv
 import hmac
 import os
+import sqlite3
 from datetime import datetime
 from functools import wraps
 from dotenv import load_dotenv
@@ -19,8 +19,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 
 # --- Config -----------------------------------------------------------
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-CSV_PATH = os.path.join(DATA_DIR, "entries.csv")
-CSV_HEADERS = ["date", "time", "entry", "vibes", "hydration", "submitted_at"]
+DB_PATH = os.path.join(DATA_DIR, "daily_log.db")
 
 PAGE_TITLE = config.PAGE_TITLE
 PAGE_SUBTITLE = config.PAGE_SUBTITLE
@@ -57,16 +56,32 @@ def requires_auth(f):
 
 
 # --- Storage --------------------------------------------------------------
-def ensure_csv():
+def ensure_db():
     os.makedirs(DATA_DIR, exist_ok=True)
-    if not os.path.exists(CSV_PATH):
-        with open(CSV_PATH, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(CSV_HEADERS)
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS entries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT NOT NULL,
+                time TEXT NOT NULL,
+                entry TEXT,
+                vibes TEXT,
+                hydration TEXT,
+                submitted_at TEXT NOT NULL
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS daily_meds (
+                date TEXT PRIMARY KEY,
+                adderall_taken INTEGER DEFAULT 0,
+                adderall_time TEXT,
+                nighttime_meds_taken INTEGER DEFAULT 0
+            )
+        """)
 
 
 def append_entry(date_val, time_val, entry_val, vibes_val, hydration_val):
-    ensure_csv()
+    ensure_db()
     now = datetime.now()
     # Fallback rule: if no time given, use the current server time.
     # (Matches the "if no time entered use timestamp field" logic
@@ -76,16 +91,21 @@ def append_entry(date_val, time_val, entry_val, vibes_val, hydration_val):
     if not date_val:
         date_val = now.strftime("%Y-%m-%d")
 
-    with open(CSV_PATH, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow([
-            date_val,
-            time_val,
-            entry_val.strip(),
-            vibes_val,
-            hydration_val,
-            now.isoformat(timespec="seconds"),
-        ])
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """
+            INSERT INTO entries (date, time, entry, vibes, hydration, submitted_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                date_val,
+                time_val,
+                entry_val.strip() or None,
+                vibes_val,
+                hydration_val,
+                now.isoformat(timespec="seconds"),
+            ),
+        )
 
 
 # --- Routes -----------------------------------------------------------
@@ -115,10 +135,6 @@ def submit():
     vibes_val = request.form.get("vibes", "").strip()
     hydration_val = request.form.get("hydration", "").strip()
 
-    if not entry_val:
-        flash("Entry text can't be empty.")
-        return redirect(url_for("index"))
-
     if vibes_val and vibes_val not in VIBE_OPTIONS:
         flash("Invalid mood selection.")
         return redirect(url_for("index"))
@@ -133,6 +149,6 @@ def submit():
 
 
 if __name__ == "__main__":
-    ensure_csv()
+    ensure_db()
     debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
     app.run(debug=debug_mode)
