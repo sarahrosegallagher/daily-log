@@ -6,3 +6,4 @@ instance/
 .DS_Store
 data/entries.csv
 README-internal.md
+config.py

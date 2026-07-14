@@ -9,6 +9,11 @@ from flask import Flask, render_template, request, redirect, url_for, flash, Res
 
 load_dotenv()  # reads .env if present; no-op if it doesn't exist (e.g. on PythonAnywhere)
 
+try:
+    import config  # private, gitignored — real site copy
+except ImportError:
+    import config_example as config  # public fallback for a fresh checkout
+
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 
@@ -17,7 +22,10 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 CSV_PATH = os.path.join(DATA_DIR, "entries.csv")
 CSV_HEADERS = ["date", "time", "entry", "vibes", "submitted_at"]
 
-VIBE_OPTIONS = ["Really Nice", "Nice", "Neutral", "Rough", "Really Rough"]  # edit to taste
+PAGE_TITLE = config.PAGE_TITLE
+PAGE_SUBTITLE = config.PAGE_SUBTITLE
+ENTRY_PLACEHOLDER = config.ENTRY_PLACEHOLDER
+VIBE_OPTIONS = config.VIBE_OPTIONS
 
 # Basic auth credentials - set these as environment variables on the host,
 # don't hardcode real values here.
@@ -89,6 +97,9 @@ def index():
         today=today,
         now_time=now_time,
         vibe_options=VIBE_OPTIONS,
+        page_title=PAGE_TITLE,
+        page_subtitle=PAGE_SUBTITLE,
+        entry_placeholder=ENTRY_PLACEHOLDER,
     )
 
 

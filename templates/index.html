@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daily Log</title>
+  <title>{{ page_title }}</title>
   <style>
     :root {
       --bg: #f7f6f3;
@@ -125,10 +125,8 @@
 </head>
 <body>
   <div class="card">
-    <h1>Monch Cronch</h1>
-    <p class="sub">compassionate witnessing</p>
-        <p class="sub">i love you</p>
-
+    <h1>{{ page_title }}</h1>
+    <p class="sub">{{ page_subtitle }}</p>
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
@@ -150,8 +148,8 @@
         </div>
       </div>
 
-      <label for="entry">Food & Drink</label>
-      <textarea id="entry" name="entry" placeholder="What happened..." required></textarea>
+      <label for="entry">{{ entry_placeholder }}</label>
+      <textarea id="entry" name="entry" placeholder="..." required></textarea>
 
       <label>Vibes</label>
       <div class="vibes">
