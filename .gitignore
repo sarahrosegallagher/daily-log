@@ -14,4 +14,4 @@ migrate_to_sqlite.py
 split_comma_entries.py
 
 #data inspection
-.sql 
+*.sql 
