@@ -6,9 +6,8 @@
   <title>{{ page_title }}</title>
   <style>
     :root {
-      /* Tokens from STYLE_GUIDE.md — chart-lightblue as page bg, chart-amber as accent */
-      --bg: #33b2df;
-      --surface: #ffffff;
+      /* Tokens from STYLE_GUIDE.md, plus a static sunrise/sunset gradient page background */
+      --surface: #e0e0e0;
       --ink: #1e1e1e;
       --ink-soft: #6b6862;
       --line: #e0e0e0;
@@ -16,12 +15,14 @@
       --accent-ink: #1e1e1e;
       --accent-soft: #fff4da;
       --neutral: #f0f0f0;
+      --selected-button: #646770;
+      --send-it: #454545;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--bg);
+      background: linear-gradient(135deg, #A37DEF 0%, #FE9C95 50%, #3BBEEF 100%);
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       display: flex;
@@ -104,15 +105,15 @@
       cursor: pointer;
     }
     .pill-group input:checked + label {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: var(--accent-ink);
+      background: var(--selected-button);
+      border-color: var(--selected-button);
+      color: #fff;
     }
     button {
       width: 100%;
       margin-top: 26px;
-      background: var(--accent);
-      color: var(--accent-ink);
+      background: var(--send-it);
+      color: #fff;
       border: none;
       border-radius: 8px;
       padding: 13px;

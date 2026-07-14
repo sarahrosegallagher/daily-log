@@ -15,3 +15,6 @@ split_comma_entries.py
 
 #data inspection
 *.sql 
+
+#claude use
+style_guide.md
